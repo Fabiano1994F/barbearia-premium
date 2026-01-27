@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { Suspense } from 'react' // Importação necessária
 import { Calendar } from "@/components/ui/Calendar"
 import { Button } from "@/components/ui/Button"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -9,15 +10,15 @@ import { ptBR } from "date-fns/locale"
 
 const AVAILABLE_HOURS = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
 
-export default function BookingPage() {
+// Criamos um sub-componente para isolar o useSearchParams
+function BookingContent() {
   const [date, setDate] = React.useState<Date | undefined>(new Date())
   const [selectedHour, setSelectedHour] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const router = useRouter()
   const searchParams = useSearchParams()
-  
-  // 1. CAPTURAMOS O NOME E O ID QUE VIERAM DA URL
+
   const serviceId = searchParams.get("serviceId")
   const name = searchParams.get("name") 
 
@@ -26,11 +27,7 @@ export default function BookingPage() {
     setIsSubmitting(true)
     try {
       const dateParam = format(date, "yyyy-MM-dd");
-      
       await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // 2. REPASSAMOS O NOME PARA A PÁGINA DE SUCESSO
-      // Usamos encodeURIComponent para garantir que o nome chegue intacto
       router.push(`/bookings/success?date=${dateParam}&hour=${selectedHour}&name=${encodeURIComponent(name || "")}`);
     } catch (error) {
       console.error(error)
@@ -43,7 +40,6 @@ export default function BookingPage() {
   return (
     <main className="container mx-auto py-10 px-4 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-2 text-center text-white">Finalizar Agendamento</h1>
-      {/* 3. EXIBIMOS O NOME NO TOPO PARA PERSONALIZAR A EXPERIÊNCIA */}
       <p className="text-muted-foreground mb-8 text-center italic">
         {name ? `Olá, ${name}! ` : ""}Selecione o melhor dia e horário para o seu serviço.
       </p>
@@ -84,7 +80,6 @@ export default function BookingPage() {
           <div className="p-6 bg-secondary/10 rounded-xl border border-secondary/30 text-center">
             <h3 className="font-bold mb-3 text-white">Resumo do Agendamento</h3>
             <div className="text-sm space-y-1 text-gray-400">
-              {/* 4. INCLUÍMOS O NOME NO RESUMO */}
               <p>Cliente: <span className="text-white">{name || "Não informado"}</span></p>
               <p>Data: <span className="text-white">{format(date, "PPPP", { locale: ptBR })}</span></p>
               <p>Horário: <span className="text-white">{selectedHour}</span></p>
@@ -103,4 +98,13 @@ export default function BookingPage() {
       )}
     </main>
   );
+}
+
+// O componente principal apenas envolve o conteúdo no Suspense
+export default function BookingPage() {
+  return (
+    <Suspense fallback={<div className="text-white text-center py-10">Carregando formulário...</div>}>
+      <BookingContent />
+    </Suspense>
+  )
 }
