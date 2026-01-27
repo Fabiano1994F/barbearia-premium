@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model Service {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  description      String?
+  price            Decimal       @db.Decimal
+  duration_minutes Int
+  created_at       DateTime?     @default(now()) @db.Timestamptz(6)
+  appointments     Appointment[]
+
+  @@map("services")
+}
+
+model Appointment {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id          String    @db.Uuid
+  service_id       String    @db.Uuid
+  appointment_date DateTime  @db.Date
+  appointment_time String    // O tipo TIME do SQL é lido como String no Prisma
+  status           String?   @default("pending")
+  created_at       DateTime? @default(now()) @db.Timestamptz(6)
+
+  service Service @relation(fields: [service_id], references: [id])
+
+  @@map("appointments")
+}
